@@ -1,12 +1,11 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 const fetch = require("node-fetch");
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEsLfjJY6Bj2RkzKVQM3ugt30KeKNoko90Fat1M5cZD2uDkzmYD_PRyrgddIy96i7HMA/exec";
-const BOT_TOKEN = "MTUxMzIyOTM3ODQ0NjgxOTU4OA.Gm5x6a.V6kydQa9ig7qDICzekWgRWU6-WTGZh8LopKAis";
-
+const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const ALLOWED_CHANNELS = [
-  "1513229048975855756",
-  "1513229114633355487",
+  process.env.TASK_ASSIGNMENTS_CHANNEL_ID,
+  process.env.TASK_UPDATES_CHANNEL_ID,
 ];
 
 const client = new Client({
