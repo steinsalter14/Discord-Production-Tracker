@@ -18,18 +18,31 @@ const client = new Client({
 
 client.on("ready", () => {
   console.log(`Bot is online as ${client.user.tag}`);
+  console.log(`Watching channels: ${ALLOWED_CHANNELS}`);
 });
 
 client.on("messageCreate", async (message) => {
+  console.log(`Message received in channel: ${message.channel.id}`);
+  console.log(`Content: ${message.content}`);
+  console.log(`Allowed channels: ${ALLOWED_CHANNELS}`);
+
   if (message.author.bot) return;
-  if (!ALLOWED_CHANNELS.includes(message.channel.id)) return;
+  if (!ALLOWED_CHANNELS.includes(message.channel.id)) {
+    console.log("Channel not in allowed list, skipping");
+    return;
+  }
 
   const content = message.content.trim();
   if (!content.toLowerCase().startsWith("assign") &&
-      !content.toLowerCase().startsWith("update")) return;
+      !content.toLowerCase().startsWith("update")) {
+    console.log("Message doesn't start with assign/update, skipping");
+    return;
+  }
+
+  console.log("Forwarding to Apps Script...");
 
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    const res = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -39,6 +52,7 @@ client.on("messageCreate", async (message) => {
       }),
       redirect: "follow",
     });
+    console.log("Apps Script response status: " + res.status);
   } catch (err) {
     console.error("Error forwarding message:", err);
   }
