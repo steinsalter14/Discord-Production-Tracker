@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, REST, Routes, InteractionType, InteractionResponseType } = require("discord.js");
+const { Client, GatewayIntentBits, REST, Routes } = require("discord.js");
 const fetch = require("node-fetch");
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
@@ -8,15 +8,14 @@ const GUILD_ID = process.env.GUILD_ID;
 const TASK_ASSIGNMENTS_CHANNEL_ID = process.env.TASK_ASSIGNMENTS_CHANNEL_ID;
 const TASK_UPDATES_CHANNEL_ID = process.env.TASK_UPDATES_CHANNEL_ID;
 
-// Register slash commands
 const commands = [
   {
     name: "assign",
     description: "Assign a person to a cut task",
     options: [
-      { name: "seq", description: "Sequence (e.g. SEQ_1)", type: 3, required: true },
+      { name: "seq", description: "Sequence number (e.g. 1 or SEQ_1)", type: 3, required: true },
       { name: "cut", description: "Cut number (e.g. 1)", type: 3, required: true },
-      { name: "task", description: "Task type (e.g. Layout)", type: 3, required: true,
+      { name: "task", description: "Task type", type: 3, required: true,
         choices: [
           { name: "Layout", value: "Layout" },
           { name: "Genga / Animation", value: "Genga / Animation" },
@@ -40,7 +39,7 @@ const commands = [
     name: "update",
     description: "Update a cut task",
     options: [
-      { name: "seq", description: "Sequence (e.g. SEQ_1)", type: 3, required: true },
+      { name: "seq", description: "Sequence number (e.g. 1 or SEQ_1)", type: 3, required: true },
       { name: "cut", description: "Cut number (e.g. 1)", type: 3, required: true },
       { name: "task", description: "Task type", type: 3, required: true,
         choices: [
@@ -75,7 +74,6 @@ const client = new Client({
 client.on("ready", async () => {
   console.log(`Bot is online as ${client.user.tag}`);
 
-  // Register slash commands
   const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
   try {
     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands });
@@ -90,10 +88,12 @@ client.on("interactionCreate", async (interaction) => {
 
   const { commandName, options } = interaction;
 
-  // Defer reply immediately to avoid timeout
   await interaction.deferReply();
 
-  const seq    = options.getString("seq");
+  // Parse seq — accept "1" or "SEQ_1"
+  let seq = options.getString("seq");
+  if (!seq.toUpperCase().startsWith("SEQ_")) seq = `SEQ_${seq}`;
+
   const cut    = `CUT ${options.getString("cut")}`;
   const task   = options.getString("task");
   const user   = options.getString("user");
@@ -101,6 +101,8 @@ client.on("interactionCreate", async (interaction) => {
   const notes  = options.getString("notes") || "";
 
   const message = `${commandName} | ${seq} | ${cut} | ${task} | ${user} | ${status}${notes ? ` | ${notes}` : ""}`;
+
+  console.log(`Forwarding message: ${message}`);
 
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
